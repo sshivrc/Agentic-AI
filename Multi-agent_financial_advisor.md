@@ -22,8 +22,9 @@ def risk_agent (user_input):
   user input: {user_input}
   """
   response=model.generate_content(prompt)
-  return response.text
   print(response.text)
+  return response.text
+
 
 ## agent2 - investment advisor agent
 def investment_advisor(risk_summary):
@@ -34,8 +35,9 @@ def investment_advisor(risk_summary):
   Financial risk summary:{risk_summary}
   """
   response=model.generate_content(prompt)
-  return response.text
   print(response.text)
+  return response.text
+
 
 ## agent3 - planning agents
 def planning_agent(investment_plan):
@@ -46,8 +48,9 @@ def planning_agent(investment_plan):
   planning agent:{investment_plan}
   """
   response=model.generate_content(prompt)
-  return response.text
   print(response.text)
+  return response.text
+
 
 
 ## agent 4- logger agent
@@ -63,8 +66,9 @@ def logger_agent(name,cid,input_text,summary,plan, followup):
   plan:{plan},
   followup:{followup}
   """
-  return log_entry
   print(log_entry)
+  return log_entry
+
   with open("logger.txt","a") as f:
     f.write(logger_entry)
 
