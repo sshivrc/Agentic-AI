@@ -1,0 +1,90 @@
+from re import template
+#Recruitment demo
+
+# Step1 -install all necessary packages
+
+!pip install -q langchain langchain-google-genai langchain-community python-dotenv pypdf docx2txt langchain-core langchain-text-splitters langchain-classic
+
+# step2- import libraries
+import os
+from google.colab import files, userdata
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.prompts import PromptTemplate
+from langchain_classic.chains import LLMChain
+from langchain_core.output_parsers import StrOutputParser
+
+#step3 - APT key set up
+
+os.environ["GOOGLE_API_KEY"]=userdata.get("test")
+
+#Step4 - LLM set up
+
+llm=ChatGoogleGenerativeAI(model="gemini-2.5-flash",temperature=0.3)
+
+output_parser=StrOutputParser()
+
+#Step5 - Define prompt
+
+template='''
+You are a resume analyser. 
+
+Compare the resume with the following job description.
+
+job description:{job_description}
+
+Resume text: {resume_text}
+
+Give simple analysis:
+-Fit score(0-10)
+- Top 5 matching skills
+- missing important skills
+- one line verdict
+
+'''
+
+prompt=PromptTemplate(
+    template=template,
+    input_variables=["job_description","resume_text"],
+    output_parser=output_parser
+)
+chain= LLMChain(llm=llm,prompt=prompt,output_parser=output_parser)
+
+# Step6- upload and extract text
+
+print("Upload your file(pdf/docs/txt):")
+
+uploaded = files.upload()
+if not uploaded:
+  raise ValueError("No file uploaded")
+resume_path=list(uploaded.keys())[0]
+
+if resume_path.lower().endswith(".pdf"):
+  loader=PyPDFLoader(resume_path)
+elif resume_path.lower().endswith(".docx") or resume_path.endswith(".doc"):
+  loader=Docx2txtLoader(resume_path)
+else:
+  loader=TextLoader(resume_path,encoding="utf-8")
+
+docs=loader.load()
+
+# Split large texts into chunks
+
+splitter=RecursiveCharacterTextSplitter(chunk_size=1000,chunk_overlap=200)
+
+chunks=splitter.split_documents(docs)
+
+resume_text =" ".join(doc.page_content for doc in chunks).strip()
+
+if not resume_text:
+  raise ValueError("Could not extract text from uploaded file")
+
+
+# run the analysis
+
+job_description= """ We are hiring for the senior python developer with experience in: python, prompt engineering, artificial intelligence, machine learning, langchain, llamaindex"""
+
+result= chain.run(job_description=job_description,resume_text=resume_text)
+
+print(result)
